@@ -21,6 +21,8 @@ Example : %(prog)s --command json -k "user.*" /var/redis/6379/dump.rdb"""
     parser = ArgumentParser(prog='rdb', usage=usage)
     parser.add_argument("-c", "--command", dest="command", required=True,
                   help="Command to execute. Valid commands are json, diff, justkeys, justkeyvals, memory and protocol", metavar="CMD")
+    parser.add_argument("-ne", "--never_expire", dest="never_expire", required=False,
+                  help="filter Never_Expire")
     parser.add_argument("-f", "--file", dest="output",
                   help="Output file", metavar="FILE")
     parser.add_argument("-n", "--db", dest="dbs", action="append",
@@ -58,7 +60,12 @@ Example : %(prog)s --command json -k "user.*" /var/redis/6379/dump.rdb"""
     
     if options.keys:
         filters['keys'] = options.keys
-        
+
+    if options.keys:
+        filters['never_expire'] = True
+    else:
+        filters['never_expire'] = False
+
     if options.not_keys:
         filters['not_keys'] = options.not_keys
     

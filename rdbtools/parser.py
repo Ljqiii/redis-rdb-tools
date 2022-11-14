@@ -457,7 +457,7 @@ class RdbParser(object):
 
                 if self.matches_filter(db_number):
                     self._key = self.read_string(f)
-                    if self.matches_filter(db_number, self._key, data_type):
+                    if self.matches_filter(db_number, self._key, data_type, self._expiry):
                         self.read_object(f, data_type)
                     else:
                         self.skip_object(f, data_type)
@@ -981,7 +981,10 @@ class RdbParser(object):
             self._filters['keys'] = re.compile(b".*")
         else:
             self._filters['keys'] = str2regexp(filters['keys'])
-        
+        if 'never_expire' in filters:
+            self._filters['never_expire']=True
+        else:
+            self._filters['never_expire']=False
         if not ('not_keys' in filters and filters['not_keys']):
             self._filters['not_keys'] = None
         else:
@@ -995,7 +998,7 @@ class RdbParser(object):
             else:
                 raise Exception('init_filter', 'invalid value for types in filter %s' %filters['types'])
         
-    def matches_filter(self, db_number, key=None, data_type=None):
+    def matches_filter(self, db_number, key=None, data_type=None, expiry=None):
 
         if isinstance(key, bytes):
             key_to_match = key
@@ -1009,6 +1012,9 @@ class RdbParser(object):
         if key and self._filters['not_keys'] and (self._filters['not_keys'].match(key_to_match)):
             return False
         if key and (not self._filters['keys'].match(key_to_match)):
+            return False
+
+        if key and self._filters['never_expire'] and expiry is not None:
             return False
 
         if data_type is not None and 'types' in self._filters and (not self.get_logical_type(data_type) in self._filters['types']):
